@@ -15,8 +15,8 @@ def callback01(pose0_msg: PoseStamped, pose1_msg: PoseStamped):
     global mu, sigma
     global uwb0_pub, uwb1_pub
 
-    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=100)
-    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=100)
+    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=1)
+    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=1)
 
     uwb0_msg, uwb1_msg = uwb(), uwb()
 
@@ -48,9 +48,9 @@ def callback012(pose0_msg: PoseStamped, pose1_msg: PoseStamped, pose2_msg: PoseS
     global mu, sigma
     global uwb0_pub, uwb1_pub, uwb2_pub
 
-    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=100)
-    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=100)
-    uwb2_pub = rospy.Publisher('/uwb2', uwb, queue_size=100)
+    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=1)
+    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=1)
+    uwb2_pub = rospy.Publisher('/uwb2', uwb, queue_size=1)
 
 
     uwb0_msg, uwb1_msg, uwb2_msg = uwb(), uwb(), uwb()
@@ -102,10 +102,10 @@ def callback0123(pose0_msg: PoseStamped, pose1_msg: PoseStamped, pose2_msg: Pose
     global mu, sigma
     global uwb0_pub, uwb1_pub, uwb2_pub, uwb3_pub
 
-    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=100)
-    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=100)
-    uwb2_pub = rospy.Publisher('/uwb2', uwb, queue_size=100)
-    uwb3_pub = rospy.Publisher('/uwb3', uwb, queue_size=100)
+    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=1)
+    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=1)
+    uwb2_pub = rospy.Publisher('/uwb2', uwb, queue_size=1)
+    uwb3_pub = rospy.Publisher('/uwb3', uwb, queue_size=1)
 
     uwb0_msg, uwb1_msg, uwb2_msg, uwb3_msg = uwb(), uwb(), uwb(), uwb()
 
@@ -171,11 +171,11 @@ def callback01234(pose0_msg: PoseStamped, pose1_msg: PoseStamped, pose2_msg: Pos
     global mu, sigma
     global uwb0_pub, uwb1_pub, uwb2_pub, uwb3_pub, uwb4_pub
 
-    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=100)
-    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=100)
-    uwb2_pub = rospy.Publisher('/uwb2', uwb, queue_size=100)
-    uwb3_pub = rospy.Publisher('/uwb3', uwb, queue_size=100)
-    uwb4_pub = rospy.Publisher('/uwb4', uwb, queue_size=100)
+    uwb0_pub = rospy.Publisher('/uwb0', uwb, queue_size=1)
+    uwb1_pub = rospy.Publisher('/uwb1', uwb, queue_size=1)
+    uwb2_pub = rospy.Publisher('/uwb2', uwb, queue_size=1)
+    uwb3_pub = rospy.Publisher('/uwb3', uwb, queue_size=1)
+    uwb4_pub = rospy.Publisher('/uwb4', uwb, queue_size=1)
 
     uwb0_msg, uwb1_msg, uwb2_msg, uwb3_msg, uwb4_msg = uwb(), uwb(), uwb(), uwb(), uwb()
 
@@ -274,10 +274,10 @@ def listener():
     pose3_sub = message_filters.Subscriber('/vicon/pose3', PoseStamped)
     pose4_sub = message_filters.Subscriber('/vicon/pose4', PoseStamped)
 
-    # ts = message_filters.ApproximateTimeSynchronizer([pose0_sub, pose1_sub, pose2_sub, pose3_sub, pose4_sub], 100, 0.1)
+    # ts = message_filters.ApproximateTimeSynchronizer([pose0_sub, pose1_sub, pose2_sub, pose3_sub, pose4_sub], 1, 0.1)
     # ts.registerCallback(callback01234)
-    ts = message_filters.ApproximateTimeSynchronizer([pose0_sub, pose1_sub, pose2_sub, pose3_sub], 100, 0.1)
-    ts.registerCallback(callback0123)
+    ts = message_filters.ApproximateTimeSynchronizer([pose0_sub, pose1_sub], queue_size=1, slop=0.05)
+    ts.registerCallback(callback01)
     rospy.spin()
 
 if __name__ == '__main__':

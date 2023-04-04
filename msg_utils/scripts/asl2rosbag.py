@@ -20,9 +20,9 @@ import csv
 parser = argparse.ArgumentParser(description='Create a ROS bag using the images and imu data.')
 parser.add_argument('--folder', metavar='folder', nargs='?', help='Data folder')
 parser.add_argument('--output_bag', metavar='output_bag', default="output.bag", help='ROS bag file %(default)s')
-
+parser.add_argument('--drone_id', metavar='drone_id', default="0", help='Drone Id')
 # print help if no argument is specified
-if len(sys.argv) < 2:
+if len(sys.argv) < 3:
     parser.print_help()
     sys.exit(0)
 
@@ -114,7 +114,7 @@ def createImuMessge(timestamp_int, omega, alpha):
 
 # create the bag
 bag = rosbag.Bag(parsed.output_bag, 'w')
-
+drone_id = parsed.drone_id
 # write images
 camfolders = getCamFoldersFromDir(parsed.folder)
 for camfolder in camfolders:
@@ -122,7 +122,7 @@ for camfolder in camfolders:
     image_files = getImageFilesFromDir(camdir)
     for image_filename in image_files:
         image_msg, timestamp = loadImageToRosMsg(image_filename)
-        bag.write("/{0}/image_raw4".format(camfolder), image_msg, timestamp)
+        bag.write("/{0}/image_raw{1}".format(camfolder, drone_id), image_msg, timestamp)
 
 # write imu data
 imufolders = getImuFoldersFromDir(parsed.folder)
@@ -134,7 +134,7 @@ for imufolder in imufolders:
         headers = next(reader, None)
         for row in reader:
             imumsg, timestamp = createImuMessge(row[0], row[1:4], row[4:7])
-            bag.write("/imu4", imumsg, timestamp)
+            bag.write("/imu{0}".format(drone_id), imumsg, timestamp)
 
 # write vicon data
 viconfile = parsed.folder + "/state_groundtruth_estimate0/data.csv"
@@ -147,6 +147,7 @@ with open(viconfile, 'r') as csvfile:
 
         pose = PoseStamped()
         pose.header.stamp = timestamp
+        pose.header.frame_id = 'world'
         pose.pose.position.x = float(row[1])
         pose.pose.position.y = float(row[2])
         pose.pose.position.z = float(row[3])
@@ -156,6 +157,6 @@ with open(viconfile, 'r') as csvfile:
         pose.pose.orientation.y = float(row[6])
         pose.pose.orientation.z = float(row[7])
 
-        bag.write("/vicon/pose4", pose, timestamp)
+        bag.write("/vicon/pose{0}".format(drone_id), pose, timestamp)
 
 bag.close()
