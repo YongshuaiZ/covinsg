@@ -160,6 +160,12 @@ public:
     idpair                      id_;
     double                      timestamp_;
 
+#ifdef UWB
+    // UWB msg
+    std::vector<double> dist_list;
+    std::vector<signed char> id_list;
+#endif
+
     // Calibration & image size
     VICalibration               calibration_;
     aslam::Camera::Ptr          camera_;

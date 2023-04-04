@@ -6,6 +6,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "../typedefs_base.hpp"
+#include <vector>
 
 //SERIALIZATION
 #include <cereal/cereal.hpp>
@@ -73,6 +74,10 @@ public:
     double                  timestamp;
     idpair                  id;
 
+    // uwb
+    std::vector<double> dist_list;
+    std::vector<signed char> id_list;
+
     //Calibration
     VICalibration           calibration;
     int                     img_dim_x_min;
@@ -128,7 +133,7 @@ protected:
     template<class Archive>
     auto save(Archive &archive) const ->void {
         if(save_to_file) {
-            archive(timestamp,id,
+            archive(timestamp,id, dist_list, id_list,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
@@ -142,12 +147,12 @@ protected:
                     img
                     );
         } else if(is_update_msg){
-            archive(timestamp,id,
+            archive(timestamp,id, dist_list, id_list,
                     T_sref_s,id_reference,
                     is_update_msg,
                     velocity,bias_accel,bias_gyro);
         } else {
-            archive(timestamp,id,
+            archive(timestamp,id, dist_list, id_list,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
@@ -166,7 +171,7 @@ protected:
     template<class Archive>
     auto load(Archive &archive)->void {
         if(save_to_file) {
-            archive(timestamp,id,
+            archive(timestamp,id, dist_list, id_list,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
@@ -180,12 +185,12 @@ protected:
                     img
                     );
         }else if(msg_type[1] == true){
-            archive(timestamp,id,
+            archive(timestamp,id, dist_list, id_list,
                     T_sref_s,id_reference,
                     is_update_msg,
                     velocity,bias_accel,bias_gyro);
         } else {
-            archive(timestamp,id,
+            archive(timestamp,id, dist_list, id_list,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,

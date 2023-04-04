@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.3)
 project(covins_frontend)
 
 add_compile_options(-std=c++1z -pthread -pipe -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-unused-function -Wno-vla)
+add_compile_definitions(UWB)
+add_compile_definitions(DEBUG_OUTPUT)
 
 find_package(catkin_simple REQUIRED)
 catkin_simple(ALL_DEPS_REQUIRED)

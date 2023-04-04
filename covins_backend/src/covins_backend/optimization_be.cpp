@@ -852,7 +852,15 @@ auto Optimization::PoseGraphOptimization(
     for (size_t i = 0; i < keyframes.size(); ++i) {
         KeyframePtr kf = keyframes[i];
         if(kf->IsInvalid()) continue;
-
+#ifdef DEBUG_OUTPUT
+        std::cout << "--------------------------------------------------------" << std::endl;
+        std::vector<double> dist_vector =  kf->dist_list;
+        std::vector<signed char> id_vector = kf->id_list;
+        for( int i = 0; i < dist_vector.size(); ++i ) {
+          std::cout << "距离第 " << id_vector[i] << " 个节点距离：" << dist_vector[i] << std::endl;
+        }
+        std::cout << "--------------------------------------------------------" << std::endl;
+#endif
         TransformType T_ws_init;
         PoseMap::iterator mit = corrected_poses.find(kf->id_);
         if(mit != corrected_poses.end()) T_ws_init = mit->second;

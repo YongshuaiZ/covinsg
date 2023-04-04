@@ -43,6 +43,17 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     : KeyframeBase(msg.id,msg.timestamp,msg.calibration,
                    msg.img_dim_x_min,msg.img_dim_y_min,msg.img_dim_x_max,msg.img_dim_y_max)
 {
+#ifdef DEBUG_OUTPUT
+  std::cout << "***********************************************************" << std::endl;
+  std::cout << "***********************************************************" << std::endl;
+  std::cout << "***********************************************************" << std::endl;
+  std::cout << "***********************************************************" << std::endl;
+  std::vector<double> dist_vector = msg.dist_list;
+  std::vector<signed char> id_vector = msg.id_list;
+  for( int i = 0; i < dist_vector.size(); ++i ) {
+    std::cout << "距离第 " << int(id_vector[i]) << " 个节点距离：" << dist_vector[i] << std::endl;
+  }
+#endif
     keypoints_aors_ = msg.keypoints_aors;
     keypoints_distorted_ = msg.keypoints_distorted;
     if(keypoints_distorted_.empty()) {
@@ -94,6 +105,10 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
 
     keypoints_distorted_add_ = msg.keypoints_distorted_add;
 
+#ifdef UWB
+    dist_list = msg.dist_list;
+    id_list = msg.id_list;
+#endif
     // Add additional Keypoints and Features
     if(keypoints_distorted_add_.empty()) {
       // Use the original features as additional Features
@@ -294,6 +309,11 @@ auto Keyframe::ConvertToMsg(MsgKeyframe &msg, KeyframePtr kf_ref, bool is_update
 
     msg.id_reference = kf_ref->id_;
     msg.T_sref_s = T_w_sref.inverse() * T_w_s_;
+
+#ifdef UWB
+    msg.dist_list = kf_ref->dist_list;
+    msg.id_list = kf_ref->id_list;
+#endif
 }
 
 auto Keyframe::ConvertToMsgFileExport(MsgKeyframe &msg)->void {

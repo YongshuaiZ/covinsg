@@ -22,6 +22,7 @@
 #include "communicator.hpp"
 #include "ORBextractor.h"
 #include <covins/covins_base/config_comm.hpp>
+#include "msg_utils/uwb.h"
 // ------------------
 
 namespace covins {
@@ -48,6 +49,10 @@ public:
     auto imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
                          const nav_msgs::OdometryConstPtr &msgOdom) -> void;
 
+#ifdef UWB
+    auto imageOdomUwbCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
+                         const nav_msgs::OdometryConstPtr &msgOdom, const msg_utils::uwbConstPtr &msgUwb) -> void;
+#endif
     ros::NodeHandle node_, nodeLocal_;
     cv::Mat intrinsic_;
     cv::Mat distCoeff_;
@@ -58,6 +63,12 @@ public:
 
     message_filters::Subscriber<sensor_msgs::Image> *subscriberImg_;
     message_filters::Subscriber<nav_msgs::Odometry> *subscriberOdom_;
+#ifdef UWB
+    message_filters::Subscriber<msg_utils::uwb> *subscriberUwb_;
+    message_filters::Synchronizer<
+        message_filters::sync_policies::ApproximateTime<
+            sensor_msgs::Image, nav_msgs::Odometry, msg_utils::uwb>> *sync_with_uwb_;
+#endif
     
 
     Eigen::Vector3d prev_pos_;

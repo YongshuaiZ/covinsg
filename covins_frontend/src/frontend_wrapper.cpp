@@ -18,20 +18,40 @@ auto FrontendWrapper::run()-> void {
 
   subscriberImg_->subscribe(node_, node_.resolveName("/camera/image_raw"), 5);
   subscriberOdom_->subscribe(node_, node_.resolveName("/cam_odom"), 5);
-
+#ifdef DEBUG_OUTPUT
+  std::cout << "----------------------1-----------------------------" << std::endl;
+#endif
+#ifdef UWB
+#ifdef DEBUG_OUTPUT
+  std::cout << "----------------------2-----------------------------" << std::endl;
+#endif
+  subscriberUwb_ = new message_filters::Subscriber<msg_utils::uwb>;
+  subscriberUwb_->subscribe(node_, node_.resolveName("/uwb"), 5);
+#ifdef DEBUG_OUTPUT
+  std::cout << "----------------------3-----------------------------" << std::endl;
+#endif
+#endif
   std::string config_file;
   ros::param::get("~config_file", config_file);
-
+#ifdef UWB
+  sync_with_uwb_ = new message_filters::Synchronizer<
+      message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+                                                      nav_msgs::Odometry, msg_utils::uwb>>(
+      message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+                                                      nav_msgs::Odometry, msg_utils::uwb>(100),
+      *subscriberImg_, *subscriberOdom_, *subscriberUwb_);
+  sync_with_uwb_->registerCallback(
+      boost::bind(&FrontendWrapper::imageOdomUwbCallbackTF, this, _1, _2, _3));
+#else
   sync_ = new message_filters::Synchronizer<
-      message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-                                                      nav_msgs::Odometry>>(
-      message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-                                                      nav_msgs::Odometry>(100),
-      *subscriberImg_, *subscriberOdom_);
+          message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+                  nav_msgs::Odometry>>(
+          message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+                  nav_msgs::Odometry>(100),
+          *subscriberImg_, *subscriberOdom_);
   sync_->registerCallback(
-      boost::bind(&FrontendWrapper::imageCallbackTF, this, _1, _2));
-
-
+          boost::bind(&FrontendWrapper::imageCallbackTF, this, _1, _2));
+#endif
   prev_pos_ = Eigen::Vector3d::Zero();
   curr_pos_ = Eigen::Vector3d::Zero();
   prev_quat_ = Eigen::Quaterniond::Identity();
@@ -309,6 +329,71 @@ auto FrontendWrapper::imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
     kf_count_++;
   }
 }
+
+#ifdef UWB
+auto FrontendWrapper::imageOdomUwbCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
+                                      const nav_msgs::OdometryConstPtr &msgOdom, const msg_utils::uwbConstPtr &msgUwb) -> void {
+  std::cout << "--------------------receive image odom uwb message!!!------------------------" << std::endl;
+  tf::pointMsgToEigen(msgOdom->pose.pose.position, curr_pos_);
+  tf::quaternionMsgToEigen(msgOdom->pose.pose.orientation, curr_quat_);
+
+  auto quat_ang = curr_quat_.angularDistance(prev_quat_);
+  auto trans_diff = (curr_pos_ - prev_pos_).norm();
+  double curr_ts = double(msgImg->header.stamp.toSec());
+
+  TransformType T_wc = TransformType::Identity();
+  TransformType T_wc_prev = TransformType::Identity();
+
+  T_wc.block<3, 1>(0, 3) = curr_pos_;
+  T_wc.block<3, 3>(0, 0) = curr_quat_.toRotationMatrix();
+
+  T_wc_prev.block<3, 1>(0, 3) = prev_pos_;
+  T_wc_prev.block<3, 3>(0, 0) = prev_quat_.toRotationMatrix();
+
+  // Copy the ros image message to cv::Mat.
+  cv_bridge::CvImageConstPtr cv_ptr;
+  try
+  {
+    cv_ptr = cv_bridge::toCvShare(msgImg);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+
+
+  if (trans_diff > t_min_ || quat_ang > r_min_) {
+    std::cout << "Generated New KF with id: " << kf_count_<< std::endl;
+    cv::Mat img = cv_ptr->image.clone();
+
+    // Convert KF to Msg
+    data_bundle map_chunk;
+    MsgKeyframe msg_kf;
+    this->convertToMsg(msg_kf, img, T_wc, T_wc_prev, client_id_, kf_count_, curr_ts);
+    msg_kf.dist_list = msgUwb->dist;
+    msg_kf.id_list = msgUwb->dest_id;
+#ifdef DEBUG_OUTPUT
+    std::cout << "--------------------------------------------------------" << std::endl;
+    std::vector<double> dist_vector =  msgUwb->dist;
+    std::vector<signed char> id_vector = msgUwb->dest_id;
+    for( int i = 0; i < dist_vector.size(); ++i ) {
+      std::cout << "距离第 " << int(id_vector[i]) << " 个节点距离：" << dist_vector[i] << std::endl;
+    }
+    std::cout << "--------------------------------------------------------" << std::endl;
+#endif
+    map_chunk.keyframes.push_back(msg_kf);
+    comm_->PassDataBundle(map_chunk);
+    // ------------------
+
+    prev_quat_ = curr_quat_;
+    prev_pos_ = curr_pos_;
+    Twc_prev_ = Twc_;
+    prev_ts_ = curr_ts_;
+    kf_count_++;
+  }
+}
+#endif
 
 
 bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)

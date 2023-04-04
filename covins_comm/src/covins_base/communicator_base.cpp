@@ -154,6 +154,14 @@ auto CommunicatorBase::ProcessBufferIn()->void {
                 MsgKeyframe msg(msg_type_deserialize_);
                 iarchive(msg);
                 buffer_keyframes_in_.push_back(msg);
+#ifdef DEBUG_OUTPUT
+                std::vector<double> dist_vector = msg.dist_list;
+                std::vector<int8_t> id_vector = msg.id_list;
+                std::cout << "//////////////////////////////////" << std::endl;
+                std::cout << "读取的数据中距离共有：" << dist_vector.size() << std::endl;
+                std::cout << msg.timestamp << ", " << msg.id.first << ", " << msg.id.second << std::endl;
+                std::cout << "//////////////////////////////////" << std::endl;
+#endif
             } else if(msg_type_deserialize_[4] == 1) { // Landmark
                 MsgLandmark msg(msg_type_deserialize_);
                 iarchive(msg);
@@ -168,6 +176,14 @@ auto CommunicatorBase::ProcessBufferIn()->void {
                     MsgKeyframe msg(msg_type_deserialize_);
                     iarchive(msg);
                     buffer_keyframes_in_.push_back(msg);
+#ifdef DEBUG_OUTPUT
+                  std::vector<double> dist_vector = msg.dist_list;
+                  std::vector<int8_t> id_vector = msg.id_list;
+                  std::cout << "//////////////////////////////////" << std::endl;
+                  std::cout << "读取的数据中距离共有：" << dist_vector.size() << std::endl;
+                  std::cout << msg.timestamp << ", " << msg.id.first << ", " << msg.id.second << std::endl;
+                  std::cout << "//////////////////////////////////" << std::endl;
+#endif
                 } else if(msg_type_deserialize_[4] == 1) { // Landmark
                     MsgLandmark msg(msg_type_deserialize_);
                     iarchive(msg);
@@ -194,6 +210,13 @@ auto CommunicatorBase::ProcessBufferOut()->void {
         for(int i=0;db.keyframes.size();++i){
             message_container kf_out_container;
             MsgKeyframe msg = db.keyframes.front();
+#ifdef DEBUG_OUTPUT
+            std::vector<double> dist_vector = msg.dist_list;
+            std::vector<int8_t> id_vector = msg.id_list;
+            std::cout << "//////////////////////////////////" << std::endl;
+            std::cout << "发送的数据中距离共有：" << dist_vector.size() << std::endl;
+            std::cout << "//////////////////////////////////" << std::endl;
+#endif
             db.keyframes.pop_front();
             Serialize(msg);
             kf_out_container.ser_msg << send_ser_.str();
