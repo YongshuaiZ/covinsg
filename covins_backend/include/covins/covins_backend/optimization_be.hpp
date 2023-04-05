@@ -30,7 +30,6 @@
 #include "covins_base/optimization_base.hpp"
 
 namespace covins {
-
 class Optimization : public OptimizationBase {
 public:
     Optimization()                                                                      = delete;

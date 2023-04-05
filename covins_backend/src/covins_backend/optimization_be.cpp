@@ -39,6 +39,7 @@
 
 #include <robopt_open/local-parameterization/pose-quaternion-local-param.h>
 #include <robopt_open/posegraph-error/six-dof-between.h>
+#include <robopt_open/posegraph-error/relative-distance.h>
 #include <robopt_open/imu-error/preintegration-factor.h>
 #include <robopt_open/reprojection-error/global-euclidean.h>
 #include <robopt_open/reprojection-error/relative-euclidean.h>
@@ -854,11 +855,17 @@ auto Optimization::PoseGraphOptimization(
         if(kf->IsInvalid()) continue;
 #ifdef DEBUG_OUTPUT
         std::cout << "--------------------------------------------------------" << std::endl;
+        std::cout << "--------------------------------------------------------" << std::endl;
+        std::cout << "--------------------------------------------------------" << std::endl;
         std::vector<double> dist_vector =  kf->dist_list;
         std::vector<signed char> id_vector = kf->id_list;
+        std::cout << "(" << kf->id_.first << ", " << kf->id_.second << ")" << endl;
         for( int i = 0; i < dist_vector.size(); ++i ) {
-          std::cout << "距离第 " << id_vector[i] << " 个节点距离：" << dist_vector[i] << std::endl;
+          std::cout << "距离第 " << int(id_vector[i]) << " 个节点距离：" << dist_vector[i] << std::endl;
         }
+        std::cout << "时间：" << kf->dist_timestamp << std::endl;
+        std::cout << "--------------------------------------------------------" << std::endl;
+        std::cout << "--------------------------------------------------------" << std::endl;
         std::cout << "--------------------------------------------------------" << std::endl;
 #endif
         TransformType T_ws_init;
@@ -1029,6 +1036,34 @@ auto Optimization::PoseGraphOptimization(
             }
         }
     }
+
+#ifdef UWB
+#ifdef DEBUG_OUTPUT1
+    // Add UWB dist constraints
+    std::vector<pair<idpair, pair<pair<KeyframePtr, KeyframePtr>, double>>> dist_constraints = map->GetDistConstraints();
+    std::cout << dist_constraints.size() << std::endl;
+    for( auto &item : dist_constraints ) {
+      double dist = item.second.second;
+      KeyframePtr kf1 = item.second.first.first;
+      KeyframePtr kf2 = item.second.first.second;
+      std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "(" << kf1->id_.second << "," << kf2->id_.second << "," << dist << ")" << std::endl;
+      std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+      std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+#endif
+      ceres::CostFunction* f = new robopt::posegraph::RelativeDistanceError( dist, 2 );
+      if (covins_params::opt::use_robust_loss) {
+        problem.AddResidualBlock(f, loss_function, kf1->ceres_pose_,
+                                 kf2->ceres_pose_, kf1->ceres_extrinsics_,
+                                 kf2->ceres_extrinsics_);
+      } else {
+        problem.AddResidualBlock(f, /*lossFunction*/ NULL, kf1->ceres_pose_, kf2->ceres_pose_,
+                                 kf1->ceres_extrinsics_,
+                                 kf2->ceres_extrinsics_);
+      }
+    }
+#endif
 
     // Solve
     ceres::Solver::Options solver_options;

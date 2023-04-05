@@ -163,7 +163,8 @@ public:
 #ifdef UWB
     // UWB msg
     std::vector<double> dist_list;
-    std::vector<signed char> id_list;
+    std::vector<int8_t> id_list;
+    uint64_t dist_timestamp;
 #endif
 
     // Calibration & image size

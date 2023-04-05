@@ -179,6 +179,7 @@ public:
                                      TransformType T_smatch_squery)                     ->void;
     virtual auto AddLoopConstraint(LoopConstraint lc)                                   ->void;
     virtual auto GetLoopConstraints()                                                   ->LoopVector;
+    virtual auto GetDistConstraints()                                                   ->std::vector<pair<idpair,pair<pair<KeyframePtr, KeyframePtr>, double>>>;
 
     // Save/Load Data
     virtual auto SaveToFile(std::string const &path_name)                               ->void;
@@ -203,6 +204,9 @@ protected:
 
     // Loop Correction
     LoopVector                  loop_constraints_;
+#ifdef UWB
+    std::vector<pair<idpair,pair<pair<KeyframePtr, KeyframePtr>, double>>> dist_constraints_;
+#endif
 
     // Sync
     std::mutex                  mtx_update_connections_;

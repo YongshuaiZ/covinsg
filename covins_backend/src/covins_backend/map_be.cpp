@@ -386,6 +386,27 @@ auto Map::AddKeyframe(KeyframePtr kf)->void {
 
 auto Map::AddKeyframe(covins::MapBase::KeyframePtr kf, bool suppress_output)->void {
     std::unique_lock<std::mutex> lock(mtx_map_);
+    std::cout << "/////////////////////AddKeyframe//////////////////////////" << std::endl;
+    std::vector<int8_t> id_vector = kf->id_list;
+    std::vector<double> dist_vector = kf->dist_list;
+    uint64_t dist_timestamp = kf->dist_timestamp;
+    std::cout << "id_vector.size()：" << id_vector.size() << std::endl;
+    std::cout << "dist_vector.size()：" << dist_vector.size() << std::endl;
+    std::cout << "keyframes_.size()：" << keyframes_.size() << std::endl;
+    for( auto &item : keyframes_ ) {
+      std::cout << "dist_constraints_.size()：" << dist_constraints_.size() << std::endl;
+      for( int i = 0; i < id_vector.size(); ++i ) {
+        int other_id = id_vector[i];
+        std::cout << "id:" << other_id << "," << item.first.second << std::endl;
+        double dist = dist_vector[i];
+        std::cout << "dist_timestamp：" << dist_timestamp << ", " << item.second->dist_timestamp << std::endl;
+        std::cout << fabs(dist_timestamp - item.second->dist_timestamp) / 1e9 << std::endl;
+        if( other_id == item.first.second && fabs(dist_timestamp - item.second->dist_timestamp) / 1e9 < 0.1 ) {
+          dist_constraints_.push_back(make_pair(kf->id_,make_pair(make_pair(kf, item.second), dist)));
+        }
+      }
+    }
+
     keyframes_[kf->id_] = kf;
     max_id_kf_ = std::max(max_id_kf_,kf->id_.first);
     if(!suppress_output && !(keyframes_.size() % 50)) {
@@ -504,6 +525,13 @@ auto Map::GetLoopConstraints()->LoopVector {
     std::unique_lock<std::mutex> lock(mtx_map_);
     return loop_constraints_;
 }
+
+#ifdef UWB
+auto Map::GetDistConstraints()->std::vector<pair<idpair,pair<pair<KeyframePtr, KeyframePtr>, double>>> {
+  std::unique_lock<std::mutex> lock(mtx_map_);
+  return dist_constraints_;
+}
+#endif
 
 auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
     std::cout << "+++ Load Map from File +++" << std::endl;

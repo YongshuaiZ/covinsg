@@ -333,7 +333,9 @@ auto FrontendWrapper::imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
 #ifdef UWB
 auto FrontendWrapper::imageOdomUwbCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
                                       const nav_msgs::OdometryConstPtr &msgOdom, const msg_utils::uwbConstPtr &msgUwb) -> void {
+#ifdef DEBUG_OUTPUT
   std::cout << "--------------------receive image odom uwb message!!!------------------------" << std::endl;
+#endif
   tf::pointMsgToEigen(msgOdom->pose.pose.position, curr_pos_);
   tf::quaternionMsgToEigen(msgOdom->pose.pose.orientation, curr_quat_);
 
@@ -373,6 +375,7 @@ auto FrontendWrapper::imageOdomUwbCallbackTF(const sensor_msgs::ImageConstPtr &m
     this->convertToMsg(msg_kf, img, T_wc, T_wc_prev, client_id_, kf_count_, curr_ts);
     msg_kf.dist_list = msgUwb->dist;
     msg_kf.id_list = msgUwb->dest_id;
+    msg_kf.dist_timestamp = msgUwb->header.stamp.toNSec();
 #ifdef DEBUG_OUTPUT
     std::cout << "--------------------------------------------------------" << std::endl;
     std::vector<double> dist_vector =  msgUwb->dist;

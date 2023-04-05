@@ -76,7 +76,8 @@ public:
 
     // uwb
     std::vector<double> dist_list;
-    std::vector<signed char> id_list;
+    std::vector<int8_t> id_list;
+    uint64_t dist_timestamp;
 
     //Calibration
     VICalibration           calibration;
@@ -133,7 +134,7 @@ protected:
     template<class Archive>
     auto save(Archive &archive) const ->void {
         if(save_to_file) {
-            archive(timestamp,id, dist_list, id_list,
+            archive(timestamp,id, dist_list, id_list, dist_timestamp,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
@@ -147,12 +148,12 @@ protected:
                     img
                     );
         } else if(is_update_msg){
-            archive(timestamp,id, dist_list, id_list,
+            archive(timestamp,id, dist_list, id_list, dist_timestamp,
                     T_sref_s,id_reference,
                     is_update_msg,
                     velocity,bias_accel,bias_gyro);
         } else {
-            archive(timestamp,id, dist_list, id_list,
+            archive(timestamp,id, dist_list, id_list, dist_timestamp,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
@@ -171,7 +172,7 @@ protected:
     template<class Archive>
     auto load(Archive &archive)->void {
         if(save_to_file) {
-            archive(timestamp,id, dist_list, id_list,
+            archive(timestamp,id, dist_list, id_list, dist_timestamp,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
@@ -185,12 +186,12 @@ protected:
                     img
                     );
         }else if(msg_type[1] == true){
-            archive(timestamp,id, dist_list, id_list,
+            archive(timestamp,id, dist_list, id_list, dist_timestamp,
                     T_sref_s,id_reference,
                     is_update_msg,
                     velocity,bias_accel,bias_gyro);
         } else {
-            archive(timestamp,id, dist_list, id_list,
+            archive(timestamp,id, dist_list, id_list, dist_timestamp,
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,

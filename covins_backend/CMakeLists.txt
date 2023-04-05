@@ -6,7 +6,7 @@ catkin_simple(ALL_DEPS_REQUIRED)
 
 add_compile_options(-std=c++1z -pthread -pipe -Wall -Wextra -pedantic -Wno-unused-parameter -Wno-unused-function -Wno-vla)
 add_compile_definitions(UWB)
-add_compile_definitions(DEBUG_OUTPUT)
+add_compile_definitions(DEBUG_OUTPUT1)
 #ROS_BUILD_TYPE: Set the build type. Options are (default: RelWithDebInfo):
 #Debug : w/ debug symbols, w/o optimization
 #Release : w/o debug symbols, w/ optimization

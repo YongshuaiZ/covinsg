@@ -44,15 +44,15 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                    msg.img_dim_x_min,msg.img_dim_y_min,msg.img_dim_x_max,msg.img_dim_y_max)
 {
 #ifdef DEBUG_OUTPUT
-  std::cout << "***********************************************************" << std::endl;
-  std::cout << "***********************************************************" << std::endl;
-  std::cout << "***********************************************************" << std::endl;
-  std::cout << "***********************************************************" << std::endl;
-  std::vector<double> dist_vector = msg.dist_list;
-  std::vector<signed char> id_vector = msg.id_list;
-  for( int i = 0; i < dist_vector.size(); ++i ) {
-    std::cout << "距离第 " << int(id_vector[i]) << " 个节点距离：" << dist_vector[i] << std::endl;
-  }
+    std::cout << "***********************************************************" << std::endl;
+    std::cout << "***********************************************************" << std::endl;
+    std::cout << "***********************************************************" << std::endl;
+    std::cout << "***********************************************************" << std::endl;
+    std::vector<double> dist_vector = msg.dist_list;
+    std::vector<signed char> id_vector = msg.id_list;
+    for( int i = 0; i < dist_vector.size(); ++i ) {
+      std::cout << "距离第 " << int(id_vector[i]) << " 个节点距离：" << dist_vector[i] << std::endl;
+    }
 #endif
     keypoints_aors_ = msg.keypoints_aors;
     keypoints_distorted_ = msg.keypoints_distorted;
@@ -108,6 +108,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
 #ifdef UWB
     dist_list = msg.dist_list;
     id_list = msg.id_list;
+    dist_timestamp = msg.dist_timestamp;
 #endif
     // Add additional Keypoints and Features
     if(keypoints_distorted_add_.empty()) {
@@ -289,6 +290,7 @@ auto Keyframe::ConvertToMsg(MsgKeyframe &msg, KeyframePtr kf_ref, bool is_update
 
     msg.id = id_;
     msg.timestamp = timestamp_;
+    msg.dist_timestamp = dist_timestamp;
 
     if(!kf_ref)  {
         std::cout << COUTFATAL << "!kf_ref!" << std::endl;
