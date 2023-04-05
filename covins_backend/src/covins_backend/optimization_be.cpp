@@ -84,7 +84,7 @@ auto Optimization::GlobalBundleAdjustment(MapPtr map, int interations_limit, dou
             if(kf->IsInvalid()) continue;
 
             // Add the state parameters
-            kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+            kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_,kf->ceres_uwb_extrinsics_);
             problem.AddParameterBlock(kf->ceres_pose_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
             if(kf->id_.first == 0 && kf->id_.second == map->id_map_)
                 problem.SetParameterBlockConstant(kf->ceres_pose_);
@@ -325,7 +325,7 @@ auto Optimization::GlobalBundleAdjustment(MapPtr map, int interations_limit, dou
             }
 
             // Add the state parameters
-            kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+            kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_,kf->ceres_uwb_extrinsics_);
             problem.AddParameterBlock(kf->ceres_pose_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
             if(kf->id_.first == 0 && kf->id_.second == map->id_map_) {
                 problem.SetParameterBlockConstant(kf->ceres_pose_);
@@ -874,7 +874,7 @@ auto Optimization::PoseGraphOptimization(
         else T_ws_init = kf->GetPoseTws();
 
         // Add parameter blocks
-        kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+        kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_, kf->ceres_uwb_extrinsics_);
         QuaternionType q_ws_init(T_ws_init.block<3,3>(0,0));
         kf->ceres_pose_[0] = q_ws_init.x();
         kf->ceres_pose_[1] = q_ws_init.y();
@@ -888,6 +888,9 @@ auto Optimization::PoseGraphOptimization(
             problem.SetParameterBlockConstant(kf->ceres_pose_);
         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
+
+        problem.AddParameterBlock(kf->ceres_uwb_extrinsics_, robopt::defs::pose::kPositionBlockSize);
+        problem.SetParameterBlockConstant(kf->ceres_uwb_extrinsics_);
 
         if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {	
             if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;	
@@ -1055,12 +1058,12 @@ auto Optimization::PoseGraphOptimization(
       ceres::CostFunction* f = new robopt::posegraph::RelativeDistanceError( dist, 2 );
       if (covins_params::opt::use_robust_loss) {
         problem.AddResidualBlock(f, loss_function, kf1->ceres_pose_,
-                                 kf2->ceres_pose_, kf1->ceres_extrinsics_,
-                                 kf2->ceres_extrinsics_);
+                                 kf2->ceres_pose_, kf1->ceres_uwb_extrinsics_,
+                                 kf2->ceres_uwb_extrinsics_);
       } else {
         problem.AddResidualBlock(f, /*lossFunction*/ NULL, kf1->ceres_pose_, kf2->ceres_pose_,
-                                 kf1->ceres_extrinsics_,
-                                 kf2->ceres_extrinsics_);
+                                 kf1->ceres_uwb_extrinsics_,
+                                 kf2->ceres_uwb_extrinsics_);
       }
     }
 #endif
@@ -1087,7 +1090,7 @@ auto Optimization::PoseGraphOptimization(
         TransformType T_ws_uncorrected = kf->GetPoseTws();
         non_corrected_poses[kf->id_] = T_ws_uncorrected;
         TransformType T_ws_corrected = Utils::Ceres2Transform(kf->ceres_pose_);
-        kf->UpdateFromCeres(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+        kf->UpdateFromCeres(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_,kf->ceres_uwb_extrinsics_);
         Vector3Type velocity_corrected = T_ws_corrected.block<3,3>(0,0) * T_ws_uncorrected.inverse().block<3,3>(0,0) * kf->GetStateVelocity();
         kf->SetStateVelocity(velocity_corrected);
 

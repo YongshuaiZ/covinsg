@@ -53,6 +53,7 @@ public:
     using Matrix3Type                   = TypeDefs::Matrix3Type;
     using TransformType                 = TypeDefs::TransformType;
     using MsgTypeVector                 = TypeDefs::MsgTypeVector;
+    using PositionType                  = TypeDefs::PositionType;
 
     struct compare_less{bool operator() (const MsgKeyframe &a, const MsgKeyframe &b) const;};
 
@@ -101,7 +102,7 @@ public:
 
     // SE3 Pose, Bias, Velocity
     TransformType           T_s_c                                                               = TransformType::Identity();    // Tranformation IMU-Cam
-
+    PositionType            P_s_u                                                               = PositionType::Zero();    // Tranformation IMU-UWB
     TransformType           T_sref_s                                                            = TransformType::Identity();
     TransformType           T_w_s                                                               = TransformType::Identity();
     TransformType           T_w_s_vio                                                           = TransformType::Identity();
@@ -139,7 +140,7 @@ protected:
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
                     keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
-                    T_s_c,T_w_s,T_w_s_vio,
+                    T_s_c,P_s_u,T_w_s,T_w_s_vio,
                     velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
@@ -158,7 +159,7 @@ protected:
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
                     keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
-                    T_s_c,T_sref_s,velocity,bias_gyro,bias_accel,
+                    T_s_c, P_s_u, T_sref_s,velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
                     preintegration,
@@ -177,7 +178,7 @@ protected:
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
                     keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
-                    T_s_c,T_w_s,T_w_s_vio,
+                    T_s_c, P_s_u, T_w_s,T_w_s_vio,
                     velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
@@ -196,7 +197,7 @@ protected:
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
                     keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
-                    T_s_c,T_sref_s,velocity,bias_gyro,bias_accel,
+                    T_s_c, P_s_u, T_sref_s,velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
                     preintegration,

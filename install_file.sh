@@ -1,22 +1,22 @@
 #!/bin/bash
 
-FRONTEND=false
+FRONTEND=true
 ORB_SLAM3=false
 
 # check command line arguments
-while getopts ":fo" opt; do
-  case $opt in
-    f)
-      FRONTEND=true
-      ;;
-    o)
-      ORB_SLAM3=true
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      ;;
-  esac
-done
+#while getopts ":fo" opt; do
+#  case $opt in
+#    f)
+#      FRONTEND=true
+#      ;;
+#    o)
+#      ORB_SLAM3=true
+#      ;;
+#    \?)
+#      echo "Invalid option: -$OPTARG" >&2
+#      ;;
+#  esac
+#done
 
 # shift command line arguments so that $1 is the first non-option argument
 shift "$((OPTIND-1))"
@@ -89,38 +89,38 @@ then
   make -j${NR_JOBS}
 fi
 
-cd ${BASEDIR}/orb_slam3/Thirdparty/DBoW2
-if [ ! -d "build" ]
-then
-  mkdir build
-  cd build
-  cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-  make -j${NR_JOBS}
-fi
-
-cd ${BASEDIR}/orb_slam3/Thirdparty/g2o
-if [ ! -d "build" ]
-then
-  mkdir build
-  cd build
-  cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-  make -j${NR_JOBS}
-fi
-
-cd ${BASEDIR}/orb_slam3/Vocabulary
-if [ ! -f "ORBvoc.txt" ]
-then
-  tar -xf ORBvoc.txt.tar.gz
-fi
-
-cd ${BASEDIR}/orb_slam3
-if [ ! -d "build" ]
-then
-  mkdir build
-fi
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-make -j${NR_JOBS}
+#cd ${BASEDIR}/orb_slam3/Thirdparty/DBoW2
+#if [ ! -d "build" ]
+#then
+#  mkdir build
+#  cd build
+#  cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+#  make -j${NR_JOBS}
+#fi
+#
+#cd ${BASEDIR}/orb_slam3/Thirdparty/g2o
+#if [ ! -d "build" ]
+#then
+#  mkdir build
+#  cd build
+#  cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+#  make -j${NR_JOBS}
+#fi
+#
+#cd ${BASEDIR}/orb_slam3/Vocabulary
+#if [ ! -f "ORBvoc.txt" ]
+#then
+#  tar -xf ORBvoc.txt.tar.gz
+#fi
+#
+#cd ${BASEDIR}/orb_slam3
+#if [ ! -d "build" ]
+#then
+#  mkdir build
+#fi
+#cd build
+#cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+#make -j${NR_JOBS}
 
 #finish
 exit 0

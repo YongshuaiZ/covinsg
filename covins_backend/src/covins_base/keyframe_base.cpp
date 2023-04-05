@@ -43,6 +43,7 @@ KeyframeBase::KeyframeBase(idpair id, double timestamp, VICalibration calib,
       img_dim_x_max_(img_dim_x_max),img_dim_y_max_(img_dim_y_max)
 {
     T_s_c_ = calibration_.T_SC;
+    P_s_u_ = calibration_.P_SU;
 
     if(calibration_.intrinsics[0] == 0.0){
         std::cout << "Calibration incorrect?: intrinsics: " << calibration_.intrinsics.transpose() << std::endl;
@@ -345,6 +346,11 @@ auto KeyframeBase::GetPoseTcw()->TransformType {
     return T_c_w_;
 }
 
+auto KeyframeBase::GetPositionPsu()->PositionType {
+  std::unique_lock<std::mutex> lock(mtx_pose_);
+  return P_s_u_;
+}
+
 auto KeyframeBase::GetPoseTsw()->TransformType {
     std::unique_lock<std::mutex> lock(mtx_pose_);
     return T_s_w_;
@@ -384,6 +390,11 @@ auto KeyframeBase::GetStateBias(Vector3Type &ba, Vector3Type &bg)->void {
 auto KeyframeBase::GetStateExtrinsics()->TransformType {
     std::unique_lock<std::mutex> lock(mtx_pose_);
     return T_s_c_;
+}
+
+auto KeyframeBase::GetStateUWBExtrinsics()->PositionType {
+  std::unique_lock<std::mutex> lock(mtx_pose_);
+  return P_s_u_;
 }
 
 auto KeyframeBase::GetStateVelocity()->Vector3Type {
@@ -483,7 +494,7 @@ auto KeyframeBase::SortConnectedKeyframes(bool lock_mtx)->void {
     if(lock_mtx) mtx_pose_.unlock();
 }
 
-auto KeyframeBase::UpdateCeresFromState(precision_t *ceres_pose, precision_t *ceres_velocity_and_bias, precision_t *ceres_extrinsics)->void {
+auto KeyframeBase::UpdateCeresFromState(precision_t *ceres_pose, precision_t *ceres_velocity_and_bias, precision_t *ceres_extrinsics, precision_t *ceres_uwb_extrinsics)->void {
     std::unique_lock<std::mutex> lock(mtx_pose_);
 
     // Update the pose
@@ -509,6 +520,11 @@ auto KeyframeBase::UpdateCeresFromState(precision_t *ceres_pose, precision_t *ce
     ceres_extrinsics[5]= T_s_c_(1,3);
     ceres_extrinsics[6]= T_s_c_(2,3);
 
+    // Update the Extrinsics
+    ceres_uwb_extrinsics[0]= P_s_u_(0, 0);
+    ceres_uwb_extrinsics[1]= P_s_u_(1, 0);
+    ceres_uwb_extrinsics[2]= P_s_u_(2, 0);
+
     // Update velocity and bias
     ceres_velocity_and_bias[0] = velocity_[0];
     ceres_velocity_and_bias[1] = velocity_[1];
@@ -521,13 +537,16 @@ auto KeyframeBase::UpdateCeresFromState(precision_t *ceres_pose, precision_t *ce
     ceres_velocity_and_bias[8] = bias_gyro_[2];
 }
 
-auto KeyframeBase::UpdateFromCeres(const precision_t *ceres_pose, const precision_t *ceres_velocity_and_bias, const precision_t *ceres_extrinsics)->void {
+auto KeyframeBase::UpdateFromCeres(const precision_t *ceres_pose, const precision_t *ceres_velocity_and_bias, const precision_t *ceres_extrinsics, const precision_t *ceres_uwb_extrinsics)->void {
     std::unique_lock<std::mutex> lock(mtx_pose_);
 
     // Convert the pose to a matrix
     TransformType Tws = Utils::Ceres2Transform(ceres_pose);
     TransformType Tsc = Utils::Ceres2Transform(ceres_extrinsics);
     T_s_c_ = Tsc;
+    P_s_u_(1,0) = ceres_uwb_extrinsics[0];
+    P_s_u_(2, 0) = ceres_uwb_extrinsics[1];
+    P_s_u_(3, 0) = ceres_uwb_extrinsics[2];
     this->SetPoseTws(Tws,false);
 
     // Update the bias and velocity

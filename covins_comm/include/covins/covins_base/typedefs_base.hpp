@@ -150,6 +150,7 @@ namespace TypeDefs {
     using Vector4Type                   = Eigen::Matrix<precision_t,4,1>;
     using DynamicVectorType             = Eigen::Matrix<precision_t,Eigen::Dynamic,1>;
     using QuaternionType                = Eigen::Quaternion<precision_t>;
+    using PositionType                  = Vector3Type;
 
     using Matrix3Type                   = Eigen::Matrix<precision_t,3,3>;
     using Matrix4Type                   = Eigen::Matrix<precision_t,4,4>;
@@ -286,11 +287,12 @@ public:
     using Matrix3Type                   = TypeDefs::Matrix3Type;
     using TransformType                 = TypeDefs::TransformType;
     using DynamicVectorType             = TypeDefs::DynamicVectorType;
+    using PositionType                  = TypeDefs::PositionType;
 
 public:
 
     VICalibration()
-        : T_SC(Eigen::Matrix4d::Zero()),cam_model(static_cast<eCamModel>(-1)),dist_model(static_cast<eDistortionModel>(-1)),
+        : T_SC(Eigen::Matrix4d::Zero()), P_SU(Eigen::Vector3d::Zero()),cam_model(static_cast<eCamModel>(-1)),dist_model(static_cast<eDistortionModel>(-1)),
           img_dims((Eigen::Matrix<double,2,1>::Zero())),
           dist_coeffs(Eigen::Vector4d::Zero()),
           intrinsics(Eigen::Matrix<double,4,1>::Zero()),
@@ -301,14 +303,14 @@ public:
           delay_cam0_to_imu(0.0),delay_cam1_to_imu(0.0)
     {}
 
-    VICalibration(Eigen::Matrix4d Tsc,eCamModel cmodel, eDistortionModel dmodel,
+    VICalibration(Eigen::Matrix4d Tsc, PositionType Psu, eCamModel cmodel, eDistortionModel dmodel,
                   Eigen::VectorXd DistCoeffs,
                   double dw,double dh,
                   double dfx,double dfy,double dcx,double dcy,
                   double damax,double dgmax,double dsigmaac,double dsigmagc,double dsigmaba,double dsigmabg,double dsigmaawc,double dsigmagwc,
                   double dtau,double dg,Eigen::Vector3d va0,int irate,
                   double dDelayC0toIMU,double dDelayC1toIMU)
-        : T_SC(Tsc),cam_model(cmodel),dist_model(dmodel),
+        : T_SC(Tsc), P_SU(Psu), cam_model(cmodel),dist_model(dmodel),
           img_dims((Eigen::Matrix<precision_t,2,1>() << dw,dh).finished()),
           dist_coeffs(DistCoeffs),
           intrinsics((Eigen::Matrix<precision_t,4,1>() << dfx,dfy,dcx,dcy).finished()),
@@ -318,6 +320,8 @@ public:
           tau(dtau),g(dg),a0(va0),rate(irate),
           delay_cam0_to_imu(dDelayC0toIMU),delay_cam1_to_imu(dDelayC1toIMU)
     {}
+    //UWB
+    PositionType            P_SU;
 
     //Cam
     Eigen::Matrix4d             T_SC;                                                                                           ///< Transformation from camera to sensor (IMU) frame.
@@ -374,7 +378,7 @@ public:
     }
 
     template<class Archive> auto serialize( Archive & archive )->void {
-        archive(T_SC, cam_model, dist_model, img_dims, dist_coeffs, intrinsics, K,
+        archive(T_SC, P_SU, cam_model, dist_model, img_dims, dist_coeffs, intrinsics, K,
                 a_max, g_max, sigma_a_c, sigma_g_c, sigma_ba, sigma_bg, sigma_aw_c, sigma_gw_c, tau, g, a0,
                 rate, delay_cam0_to_imu, delay_cam1_to_imu);
     }

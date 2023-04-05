@@ -116,6 +116,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   msg.timestamp = ts;
 
   msg.calibration.T_SC = Tsc_;
+  msg.calibration.P_SU = Psu_;
   msg.calibration.cam_model = covins::eCamModel::PINHOLE;
   msg.calibration.dist_model = covins::eDistortionModel::RADTAN;
 
@@ -157,7 +158,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
 
   
   covins::VICalibration calib(
-      Tsc_, msg.calibration.cam_model, msg.calibration.dist_model,
+      Tsc_, Psu_, msg.calibration.cam_model, msg.calibration.dist_model,
       dist_coeffs, img.cols, img.rows, fx, fy, cx,
       cy, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.81,
       Eigen::Vector3d::Zero(), 0, 0.0, 0.0);
@@ -231,6 +232,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
 	msg.descriptors_add = new_descriptors_add.clone();
 
   msg.T_s_c = Tsc_;
+  msg.P_s_u = Psu_;
   msg.lin_acc = covins::TypeDefs::Vector3Type::Zero();
   msg.ang_vel = covins::TypeDefs::Vector3Type::Zero();
 
@@ -590,6 +592,31 @@ bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)
     prev_pos_ = Tsc_.block<3, 1>(3, 0);
     Eigen::Quaterniond temp_quat(Tsc_.block<3,3>(0,0));
     prev_quat_ = temp_quat;
+
+
+    // Params for Imu_Cam Transform
+
+    cv::Mat Pbu;
+    node = fSettings["Pbu"];
+    if(!node.empty())
+    {
+      Pbu = node.mat();
+      if(Pbu.rows != 3 || Pbu.cols != 1)
+      {
+        std::cerr << "*Tbc matrix have to be a 4x4 transformation matrix*" << std::endl;
+        b_miss_params = true;
+      }
+    }
+    else
+    {
+      std::cerr << "*Tbc matrix doesn't exist*" << std::endl;
+      b_miss_params = true;
+    }
+
+    std::cout << std::endl;
+    std::cout << "UWB to Imu Transform (Tbu): " << std::endl << Pbu << std::endl;
+
+    cv::cv2eigen(Pbu, Psu_);
     return true;
 }
 

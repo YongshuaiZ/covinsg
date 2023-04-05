@@ -31,6 +31,7 @@ class FrontendWrapper {
 
 public:
   using TransformType = TypeDefs::TransformType;
+  using PositionType = TypeDefs::PositionType;
   FrontendWrapper();
   ~FrontendWrapper(){};
 
@@ -92,6 +93,7 @@ public:
     double r_min_;
 
     TransformType Tsc_;
+    PositionType Psu_;
     TransformType Twc_;
     TransformType Twc_prev_;
     

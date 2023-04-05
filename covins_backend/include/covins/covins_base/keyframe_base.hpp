@@ -60,6 +60,7 @@ public:
     using Vector4Type                   = TypeDefs::Vector4Type;
     using QuaternionType                = TypeDefs::QuaternionType;
     using TransformType                 = TypeDefs::TransformType;
+    using PositionType                  = TypeDefs::PositionType;
     using Matrix3Type                   = TypeDefs::Matrix3Type;
     using KeypointType                  = TypeDefs::KeypointType;
     using AorsType                      = TypeDefs::AorsType;
@@ -99,6 +100,7 @@ public:
     virtual auto GetSuccessor()                                                         ->KeyframePtr;
     virtual auto GetPoseTcw()                                                           ->TransformType;
     virtual auto GetPoseTwc()                                                           ->TransformType;
+    virtual auto GetPositionPsu()                                                           ->PositionType;
     virtual auto GetPoseTws()                                                           ->TransformType;
     virtual auto GetPoseTsw()                                                           ->TransformType;
     virtual auto GetPoseTws_vio()                                                       ->TransformType;
@@ -106,6 +108,7 @@ public:
     virtual auto GetStateBias(Vector3Type& ba,Vector3Type& bg)                          ->void;
     virtual auto GetStateVelocity()                                                     ->Vector3Type;
     virtual auto GetStateExtrinsics()                                                   ->TransformType;
+    virtual auto GetStateUWBExtrinsics()                                                ->PositionType;
     virtual auto GetLinAccAngVel(Vector3Type& lin_acc,
                                  Vector3Type& ang_vel)                                  ->void;
 
@@ -150,11 +153,13 @@ public:
     // Update the state data from the ceres state
     virtual auto UpdateFromCeres(const precision_t* ceres_pose,
                                  const precision_t* ceres_velocity_and_bias,
-                                 const precision_t* ceres_extrinsics)                   ->void;
+                                 const precision_t* ceres_extrinsics,
+                                 const precision_t* ceres_uwb_extrinsics)                ->void;
 
     virtual auto UpdateCeresFromState(precision_t* ceres_pose,
                                       precision_t* ceres_velocity_and_bias,
-                                      precision_t* ceres_extrinsics)                    ->void;
+                                      precision_t* ceres_extrinsics,
+                                      precision_t* ceres_uwb_extrinsics)                  ->void;
 
     // Identifier
     idpair                      id_;
@@ -189,6 +194,7 @@ public:
     precision_t                 ceres_pose_local_[robopt::defs::pose::kPoseBlockSize];                            //qx,qy,qz,qw,X,Y,Z
     precision_t                 ceres_velocity_and_bias_[robopt::defs::pose::kSpeedBiasBlockSize];
     precision_t                 ceres_extrinsics_[robopt::defs::pose::kPoseBlockSize];
+    precision_t                 ceres_uwb_extrinsics_[robopt::defs::pose::kPositionBlockSize];
 
     // GT
     TransformType               T_w_s_gt                                                = TransformType::Identity();
@@ -210,7 +216,7 @@ protected:
 
     // SE3 Pose, Bias, Velocity
     TransformType               T_s_c_                                                  = TransformType::Identity();    // Tranformation IMU-Cam
-
+    PositionType                P_s_u_                                                  = PositionType::Zero();    // Transformation IMU-UWB
     TransformType               T_w_s_                                                  = TransformType::Identity();
     TransformType               T_w_s_vio_                                              = TransformType::Identity();
     TransformType               T_s_w_vio_                                              = TransformType::Identity();
